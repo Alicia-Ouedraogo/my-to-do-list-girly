@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Belle To-Do List Rose 💖</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        
+        :root {
+            --primary: #ec4899;
+            --primary-dark: #db2777;
+            --danger: #ef4444;
+            --success: #10b981;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fff0f6 0%, #ffdeeb 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+        
+        .task-completed {
+            text-decoration: line-through;
+            color: #94a3b8;
+        }
+        
+        .task-item {
+            transition: all 0.3s ease;
+        }
+        
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Animation pour les nouvelles tâches */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .new-task {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        
+        /* Style personnalisé pour le champ de saisie */
+        .custom-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-pink-500 to-rose-500 p-6 text-white">
+            <h1 class="text-2xl md:text-3xl font-bold">Ma To-Do List Pailletée ✨</h1>
+            <p class="text-pink-100 mt-1">Organisez votre journée avec élégance</p>
+        </div>
+        
+        <!-- Stats -->
+        <div class="px-6 py-4 bg-pink-50 border-b border-pink-100 flex justify-between">
+            <div class="text-center">
+                <span class="block text-sm text-blue-600">Total</span>
+                <span id="total-count" class="text-lg font-semibold">0</span>
+            </div>
+            <div class="text-center">
+                <span class="block text-sm text-green-600">Terminées</span>
+                <span id="completed-count" class="text-lg font-semibold">0</span>
+            </div>
+            <div class="text-center">
+                <span class="block text-sm text-orange-500">En cours</span>
+                <span id="remaining-count" class="text-lg font-semibold">0</span>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="p-6">
+            <!-- Add Task Form -->
+            <div class="flex mb-6 gap-2">
+                <input 
+                    type="text" 
+                    id="task-input" 
+                    placeholder="Ajouter une nouvelle tâche..." 
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg custom-input focus:border-blue-500"
+                    autocomplete="off"
+                >
+                <button 
+                    id="add-btn" 
+                    class="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+                >
+                    <span class="hidden md:inline">Ajouter</span>
+                    <span class="md:hidden">+</span>
+                </button>
+            </div>
+            
+            <!-- Task Filters -->
+            <div class="flex justify-center mb-6 space-x-2">
+                <button 
+                    id="filter-all" 
+                    class="filter-btn px-3 py-1 bg-pink-500 text-white rounded-md text-sm hover:bg-pink-600 transition-colors"
+                >
+                    Toutes
+                </button>
+                <button 
+                    id="filter-active" 
+                    class="filter-btn px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors"
+                >
+                    En cours
+                </button>
+                <button 
+                    id="filter-completed" 
+                    class="filter-btn px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors"
+                >
+                    Terminées
+                </button>
+            </div>
+            
+            <!-- Task List -->
+            <div id="task-list" class="space-y-3">
+                <!-- Les tâches seront ajoutées ici dynamiquement -->
+                <div class="text-center py-8 text-gray-500" id="empty-state">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4912958d-14f1-4541-ae7a-c8f62a47ae69.png" alt="Illustration girly d'une liste rose avec des fleurs" class="mx-auto mb-4 rounded-lg">
+                    <p>Votre liste de tâches est vide</p>
+                    <p class="text-sm mt-1">Commencez par ajouter une nouvelle tâche</p>
+                </div>
+            </div>
+            
+            <!-- Bulk Actions -->
+            <div id="bulk-actions" class="hidden mt-6 flex justify-between items-center">
+                <div>
+                    <span id="selected-count" class="text-sm text-gray-600">0 tâches sélectionnées</span>
+                </div>
+                <div class="space-x-2">
+                    <button 
+                        id="delete-selected" 
+                        class="px-3 py-1.5 bg-red-100 text-red-700 rounded-md text-sm hover:bg-red-200 transition-colors"
+                    >
+                        Supprimer
+                    </button>
+                    <button 
+                        id="complete-selected" 
+                        class="px-3 py-1.5 bg-green-100 text-green-700 rounded-md text-sm hover:bg-green-200 transition-colors"
+                    >
+                        Terminer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sélection des éléments DOM
+        const taskInput = document.getElementById('task-input');
+        const addBtn = document.getElementById('add-btn');
+        const taskList = document.getElementById('task-list');
+        const emptyState = document.getElementById('empty-state');
+        const totalCount = document.getElementById('total-count');
+        const completedCount = document.getElementById('completed-count');
+        const remainingCount = document.getElementById('remaining-count');
+        const bulkActions = document.getElementById('bulk-actions');
+        const selectedCount = document.getElementById('selected-count');
+        const deleteSelectedBtn = document.getElementById('delete-selected');
+        const completeSelectedBtn = document.getElementById('complete-selected');
+        const filterAll = document.getElementById('filter-all');
+        const filterActive = document.getElementById('filter-active');
+        const filterCompleted = document.getElementById('filter-completed');
+        
+        // Variables d'état
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let selectedTasks = [];
+        let currentFilter = 'all';
+        
+        // Initialisation
+        renderTasks();
+        updateStats();
+        
+        // Écouteurs d'événements
+        addBtn.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+        
+        deleteSelectedBtn.addEventListener('click', deleteSelectedTasks);
+        completeSelectedBtn.addEventListener('click', completeSelectedTasks);
+        
+        filterAll.addEventListener('click', () => setFilter('all'));
+        filterActive.addEventListener('click', () => setFilter('active'));
+        filterCompleted.addEventListener('click', () => setFilter('completed'));
+        
+        // Fonctions
+        function addTask() {
+            const taskText = taskInput.value.trim();
+            if (taskText === '') return;
+            
+            const newTask = {
+                id: Date.now(),
+                text: taskText,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            tasks.unshift(newTask);
+            saveTasks();
+            renderTasks();
+            updateStats();
+            
+            taskInput.value = '';
+            taskInput.focus();
+            
+            // Jouer une animation pour la nouvelle tâche
+            const firstTask = taskList.firstElementChild;
+            if (firstTask) {
+                firstTask.classList.add('new-task');
+                setTimeout(() => {
+                    firstTask.classList.remove('new-task');
+                }, 300);
+            }
+        }
+        
+        function renderTasks() {
+            // Filtrer les tâches selon le filtre actif
+            let filteredTasks = tasks;
+            if (currentFilter === 'active') {
+                filteredTasks = tasks.filter(task => !task.completed);
+            } else if (currentFilter === 'completed') {
+                filteredTasks = tasks.filter(task => task.completed);
+            }
+            
+            if (filteredTasks.length === 0) {
+                emptyState.style.display = 'block';
+                bulkActions.classList.add('hidden');
+                return;
+            } else {
+                emptyState.style.display = 'none';
+            }
+            
+            taskList.innerHTML = '';
+            
+            filteredTasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item flex items-center justify-between p-4 bg-white border rounded-lg ${task.completed ? 'border-green-100' : 'border-gray-200'}`;
+                taskElement.dataset.id = task.id;
+                
+                const taskContent = document.createElement('div');
+                taskContent.className = 'flex items-center flex-1';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-3';
+                checkbox.checked = task.completed;
+                checkbox.addEventListener('change', () => toggleTaskCompletion(task.id));
+                
+                const taskText = document.createElement('span');
+                taskText.className = `flex-1 ${task.completed ? 'task-completed' : ''}`;
+                taskText.textContent = task.text;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'ml-2 text-red-500 hover:text-red-700';
+                deleteBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                `;
+                deleteBtn.addEventListener('click', () => deleteTask(task.id));
+                
+                const selectCheckbox = document.createElement('input');
+                selectCheckbox.type = 'checkbox';
+                selectCheckbox.className = 'ml-3 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 task-selector';
+                selectCheckbox.dataset.id = task.id;
+                selectCheckbox.addEventListener('change', () => toggleTaskSelection(task.id, selectCheckbox.checked));
+                
+                taskContent.appendChild(checkbox);
+                taskContent.appendChild(taskText);
+                taskElement.appendChild(taskContent);
+                taskElement.appendChild(deleteBtn);
+                taskElement.appendChild(selectCheckbox);
+                
+                taskList.appendChild(taskElement);
+            });
+            
+            updateBulkActions();
+        }
+        
+        function toggleTaskCompletion(taskId) {
+            const taskIndex = tasks.findIndex(task => task.id === taskId);
+            if (taskIndex === -1) return;
+            
+            tasks[taskIndex].completed = !tasks[taskIndex].completed;
+            saveTasks();
+            renderTasks();
+            updateStats();
+        }
+        
+        function deleteTask(taskId) {
+            if (!confirm('Voulez-vous vraiment supprimer cette tâche ?')) return;
+            
+            tasks = tasks.filter(task => task.id !== taskId);
+            saveTasks();
+            renderTasks();
+            updateStats();
+        }
+        
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+        
+        function updateStats() {
+            const completed = tasks.filter(task => task.completed).length;
+            const remaining = tasks.length - completed;
+            
+            totalCount.textContent = tasks.length;
+            completedCount.textContent = completed;
+            remainingCount.textContent = remaining;
+        }
+        
+        function toggleTaskSelection(taskId, isSelected) {
+            if (isSelected) {
+                selectedTasks.push(taskId);
+            } else {
+                selectedTasks = selectedTasks.filter(id => id !== taskId);
+            }
+            
+            updateBulkActions();
+        }
+        
+        function updateBulkActions() {
+            if (selectedTasks.length > 0) {
+                bulkActions.classList.remove('hidden');
+                selectedCount.textContent = `${selectedTasks.length} tâche${selectedTasks.length > 1 ? 's' : ''} sélectionnée${selectedTasks.length > 1 ? 's' : ''}`;
+            } else {
+                bulkActions.classList.add('hidden');
+            }
+        }
+        
+        function deleteSelectedTasks() {
+            if (!confirm(`Voulez-vous vraiment supprimer ${selectedTasks.length} tâche${selectedTasks.length > 1 ? 's' : ''} ?`)) return;
+            
+            tasks = tasks.filter(task => !selectedTasks.includes(task.id));
+            selectedTasks = [];
+            saveTasks();
+            renderTasks();
+            updateStats();
+        }
+        
+        function completeSelectedTasks() {
+            tasks = tasks.map(task => {
+                if (selectedTasks.includes(task.id)) {
+                    return { ...task, completed: true };
+                }
+                return task;
+            });
+            
+            selectedTasks = [];
+            saveTasks();
+            renderTasks();
+            updateStats();
+        }
+        
+        function setFilter(filter) {
+            currentFilter = filter;
+            
+            // Mettre à jour le style des boutons de filtre
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            
+            const activeBtn = document.getElementById(`filter-${filter}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-gray-100', 'text-gray-700');
+                activeBtn.classList.add('bg-blue-500', 'text-white');
+            }
+            
+            renderTasks();
+        }
+    </script>
+</body>
+</html>
